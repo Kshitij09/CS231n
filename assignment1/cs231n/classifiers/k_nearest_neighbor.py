@@ -23,6 +23,9 @@ class KNearestNeighbor(object):
         """
         self.X_train = X
         self.y_train = y
+        self.norm = False
+        self.std_normalize = False
+        self.pixelwise_normalize = False
 
     def predict(self, X, k=1, num_loops=0):
         """
@@ -64,6 +67,9 @@ class KNearestNeighbor(object):
           is the Euclidean distance between the ith test point and the jth training
           point.
         """
+        if self.norm:
+            X = self.normalize(X=X, std=self.std_normalize, pixelwise=self.pixelwise_normalize)
+            
         num_test = X.shape[0]
         num_train = self.X_train.shape[0]
         dists = np.zeros((num_test, num_train))
@@ -77,7 +83,7 @@ class KNearestNeighbor(object):
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-                pass
+                dists[i,j] = np.sqrt(np.sum((X[i]- self.X_train[j]) ** 2))
 
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -89,6 +95,9 @@ class KNearestNeighbor(object):
 
         Input / Output: Same as compute_distances_two_loops
         """
+        if self.norm:
+            X = self.normalize(X=X, std=self.std_normalize, pixelwise=self.pixelwise_normalize)
+            
         num_test = X.shape[0]
         num_train = self.X_train.shape[0]
         dists = np.zeros((num_test, num_train))
@@ -101,7 +110,7 @@ class KNearestNeighbor(object):
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            dists[i] = np.sqrt(np.sum((X[i] - self.X_train) ** 2, axis=1))
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -131,10 +140,37 @@ class KNearestNeighbor(object):
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # (A-B)^2 = A^2 + B^2 - 2*A*B
+        # python broadcasting
+        # (500,1) + (5000,) = (500,5000)
+        
+        if self.norm:
+            X = self.normalize(X=X, std=self.std_normalize, pixelwise=self.pixelwise_normalize)
+
+        x_train_sqr = np.sum(self.X_train ** 2, axis=1)
+        x_test_sqr = np.sum(X ** 2, axis=1, keepdims=True)
+        dists = np.sqrt(x_train_sqr + x_test_sqr - (2 * X.dot(self.X_train.T)))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
+
+    def normalize(self, std=False, pixelwise=False, X=None):
+        self.std_normalize = std
+        self.pixelwise_normalize = pixelwise
+        if X is None:
+            self.norm = True
+            X = self.X_train
+
+        if pixelwise:
+            X -= X.mean(axis=0)
+        else:
+            X -= X.mean()
+        if std:
+            if pixelwise:
+                X /= X.std(axis=0)
+            else:
+                X /= X.std()
+        return X
 
     def predict_labels(self, dists, k=1):
         """
@@ -164,7 +200,7 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            closest_y = self.y_train[np.argsort(dists[i])[:k]]    
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
@@ -176,7 +212,7 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            y_pred[i] = np.argmax(np.bincount(closest_y))
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
