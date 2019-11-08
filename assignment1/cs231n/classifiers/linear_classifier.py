@@ -11,7 +11,11 @@ from past.builtins import xrange
 class LinearClassifier(object):
 
     def __init__(self):
-        self.W = None
+      self.W = None
+
+    def load_weights(self, W):
+      self.W = W
+      
 
     def train(self, X, y, learning_rate=1e-3, reg=1e-5, num_iters=100,
               batch_size=200, verbose=False):
@@ -57,7 +61,9 @@ class LinearClassifier(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            batch_idx = np.random.choice(num_train, batch_size)
+            X_batch = X[batch_idx]
+            y_batch = y[batch_idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -72,7 +78,7 @@ class LinearClassifier(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            self.W += - learning_rate * grad
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -102,7 +108,8 @@ class LinearClassifier(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        scores = X @ self.W
+        y_pred = np.argmax(scores, axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return y_pred
