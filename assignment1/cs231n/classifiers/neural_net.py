@@ -80,7 +80,9 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        relu = lambda x: np.fmax(0,x)
+        a1 = relu(X @ W1 + b1)
+        scores = a1 @ W2 + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -98,7 +100,16 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # shift
+        scores -= scores.max(axis=1, keepdims=True)
+        # exp
+        scores = np.exp(scores)
+        # normalize
+        scores /= np.sum(scores,axis=1, keepdims=True)
+        # loss
+        loss = -np.sum(np.log(scores[range(N), y])) / N
+        # add L2 regularization
+        loss += reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -111,7 +122,22 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dscores = scores
+        dscores[range(N), y] -= 1
+        dscores /= N
+        # gradients of softmax
+        grads["W2"] = a1.T @ (dscores) + (2 * reg * W2)
+        grads["b2"] = np.sum(dscores, axis=0)
+        
+        # gradients of relu
+        # backpropogate hidden layer
+        da1 = dscores @ W2.T
+
+        #backprop relu
+        da1[a1 <= 0] = 0
+
+        grads["W1"] = X.T @ da1 + (2 * reg * W1)
+        grads["b1"] = np.sum(da1,axis=0)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -156,7 +182,9 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            batch_idx = np.random.choice(num_train, batch_size)
+            X_batch = X[batch_idx]
+            y_batch = y[batch_idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -172,7 +200,11 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            self.params["W1"] -= learning_rate * grads["W1"]
+            self.params["b1"] -= learning_rate * grads["b1"]
+            self.params["W2"] -= learning_rate * grads["W2"]
+            self.params["b2"] -= learning_rate * grads["b2"]
+            
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -218,7 +250,11 @@ class TwoLayerNet(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # relu = lambda x: np.fmax(0,x)
+        # a1 = relu(X @ self.params["W1"] + self.params["b1"])
+        # scores = a1 @ self.params["W2"] + self.params["b2"]
+        # y_pred = np.argmax(scores)
+        y_pred = np.argmax(self.loss(X), axis=1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
